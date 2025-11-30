@@ -1,0 +1,37 @@
+name: Deploy to GitHub Pages
+
+# Запускаем только при создании релиза
+on:
+  release:
+    types: [created]
+
+# Разрешаем изменять содержимое репозитория (для push в ветку gh-pages)
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Скачиваем код из ветки main
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Подготовка файлов к публикации
+      # Мы создаем временную папку 'dist' и копируем туда только сайт, исключая служебные файлы git
+      - name: Prepare build
+        run: |
+          mkdir dist
+          cp index.html dist/
+          cp -r ru dist/
+          cp -r en dist/
+
+      # 3. Публикация на GitHub Pages
+      # Используем готовый экшен, который умеет пушить в папку
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist               # Какую папку публиковать
+          branch: gh-pages           # В какую ветку
+          target-folder: ${{ github.ref_name }} # Создать подпапку с именем тега (например, v1.0.0)
+          clean: false               # ВАЖНО: Не удалять старые версии (другие папки) в ветке
